@@ -5,7 +5,7 @@
 
 An end-to-end, production-grade **Retrieval-Augmented Generation (RAG)** pipeline integrated with an automated **LLM-as-a-Judge evaluation framework**. This system uses local open-source models to deliver domain-agnostic search answers while calculating real-time validation metrics to detect and prevent model hallucinations.
 
-Designed to illustrate senior-level data science and machine learning engineering (LLMOps) principles, the repository showcases modular software design, advanced text chunking, hybrid retrieval architectures, and statistical evaluations.
+Designed to implement production-grade data science and machine learning engineering (LLMOps) principles, the repository showcases modular software design, advanced text chunking, hybrid retrieval architectures, and statistical evaluations.
 
 ---
 
@@ -104,7 +104,7 @@ The pipeline is decoupled into discrete stages, wrapping all subsystems behind a
 
 1. **Clone the repository and navigate to the project root:**
    ```bash
-   cd "Data Science Project"
+   cd "Data Science Projects"
    ```
 
 2. **Create and activate a virtual environment:**
