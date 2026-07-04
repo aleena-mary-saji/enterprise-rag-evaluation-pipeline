@@ -152,13 +152,12 @@ The pipeline is decoupled into discrete stages, wrapping all subsystems behind a
    docker run -p 8501:8501 -p 8000:8000 rag-evaluator
    ```
 
----
-
 ## ⚙️ Configuration & Model Tweaking
 
 All parameters are declared centrally in `config/config.yaml`.
 * **Zero-Setup Dry Run**: By default, `llm.provider` is set to `"mock"`. This allows the interface to run instantly without downloading large models or starting Ollama, returning deterministic simulated outputs.
 * **Running Local Models**: Set `llm.provider: "ollama"` and ensure Ollama is serving on port 11434. The system will automatically use the active local model (e.g. `llama3`) for generation and grading.
+* **Paid Cloud LLMs**: Set `llm.provider` to `"openai"` or `"gemini"`. Supply your API credentials inside your `.env` file (`OPENAI_API_KEY` or `GEMINI_API_KEY`). The engine will invoke the corresponding endpoints (defaulting to `gpt-4o-mini` or `gemini-1.5-flash`) via REST.
 
 ---
 
