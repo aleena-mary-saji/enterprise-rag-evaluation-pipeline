@@ -104,7 +104,7 @@ The pipeline is decoupled into discrete stages, wrapping all subsystems behind a
 
 1. **Clone the repository and navigate to the project root:**
    ```bash
-   cd "Data Science Projects"
+   cd enterprise-rag-evaluation-pipeline
    ```
 
 2. **Create and activate a virtual environment:**
