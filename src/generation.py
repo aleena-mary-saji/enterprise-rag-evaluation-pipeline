@@ -1,3 +1,4 @@
+import os
 import json
 import requests
 from typing import List, Dict, Any
@@ -29,6 +30,10 @@ class LLMClient:
         self.api_base = api_base
         self.temperature = temperature
         self.max_tokens = max_tokens
+        
+        # Read API keys for paid cloud providers
+        self.openai_key = os.getenv("OPENAI_API_KEY", "")
+        self.gemini_key = os.getenv("GEMINI_API_KEY", "")
 
     def _call_ollama(self, prompt: str, system_prompt: str = None) -> str:
         """Helper to invoke Ollama via REST API."""
@@ -53,6 +58,80 @@ class LLMClient:
         except Exception as e:
             print(f"[Ollama Error] Failed to connect: {e}. Falling back to mock generator.")
             # Gracefully degrade to mock
+            return self._call_mock(prompt, system_prompt)
+
+    def _call_openai(self, prompt: str, system_prompt: str = None) -> str:
+        """Helper to invoke OpenAI chat completions via REST API."""
+        if not self.openai_key:
+            print("[OpenAI Error] OPENAI_API_KEY environment variable not set. Falling back to mock.")
+            return self._call_mock(prompt, system_prompt)
+            
+        url = "https://api.openai.com/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.openai_key}",
+            "Content-Type": "application/json"
+        }
+        
+        # Default model to gpt-4o-mini if using default llama3 naming in config
+        model = self.model_name if self.model_name and self.model_name != "llama3" else "gpt-4o-mini"
+        
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens
+        }
+        
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=25)
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            print(f"[OpenAI Error] Request failed: {e}. Falling back to mock.")
+            return self._call_mock(prompt, system_prompt)
+
+    def _call_gemini(self, prompt: str, system_prompt: str = None) -> str:
+        """Helper to invoke Google Gemini generateContent via REST API."""
+        if not self.gemini_key:
+            print("[Gemini Error] GEMINI_API_KEY environment variable not set. Falling back to mock.")
+            return self._call_mock(prompt, system_prompt)
+            
+        # Default model to gemini-1.5-flash if using default llama3 naming in config
+        model = self.model_name if self.model_name and self.model_name != "llama3" else "gemini-1.5-flash"
+        
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.gemini_key}"
+        headers = {
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "contents": {
+                "parts": [{"text": prompt}]
+            },
+            "generationConfig": {
+                "temperature": self.temperature,
+                "maxOutputTokens": self.max_tokens
+            }
+        }
+        
+        if system_prompt:
+            payload["systemInstruction"] = {
+                "parts": [{"text": system_prompt}]
+            }
+            
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=25)
+            response.raise_for_status()
+            data = response.json()
+            return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except Exception as e:
+            print(f"[Gemini Error] Request failed: {e}. Falling back to mock.")
             return self._call_mock(prompt, system_prompt)
 
     def _call_mock(self, prompt: str, system_prompt: str = None) -> str:
@@ -108,6 +187,10 @@ class LLMClient:
         """Public entry point for text completion."""
         if self.provider == "ollama":
             return self._call_ollama(prompt, system_prompt)
+        elif self.provider == "openai":
+            return self._call_openai(prompt, system_prompt)
+        elif self.provider == "gemini":
+            return self._call_gemini(prompt, system_prompt)
         return self._call_mock(prompt, system_prompt)
 
     def rewrite_query(self, query: str) -> str:
@@ -121,8 +204,8 @@ class LLMClient:
         )
         prompt = f"User conversational query: '{query}'\nOptimized search query:"
         
-        if self.provider == "ollama":
-            rewritten = self._call_ollama(prompt, system_prompt)
+        if self.provider in ["ollama", "openai", "gemini"]:
+            rewritten = self.generate(prompt, system_prompt)
             # Clean up potential LLM conversational garbage
             rewritten = rewritten.replace('"', '').replace("'", "").strip()
             return rewritten
