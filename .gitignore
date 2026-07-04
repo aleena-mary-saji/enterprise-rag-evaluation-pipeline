@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Local Database & Temporary Data Storage
+data/vectordb/
+data/temp/
+data/temp*
+
+# User Configurations & Keys
+.env
+config.yaml.local
+
+# Logs
+*.log
+rag_pipeline.log
+
+# Testing Cache
+.pytest_cache/
+tests/.pytest_cache/
+
+# OS Files
+.DS_Store
+Thumbs.db
